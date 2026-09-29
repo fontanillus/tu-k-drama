@@ -1,0 +1,224 @@
+---
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import { getProductoPorId } from "../lib/productos";
+
+const productoParam = Astro.url.searchParams.get("id");
+const productoId = Number(productoParam);
+
+if (!productoParam || Number.isNaN(productoId)) {
+    return Astro.redirect("/");
+}
+
+const producto = await getProductoPorId(productoId);
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen bg-[#F7F3ED] px-6 py-12">
+        <div class="max-w-7xl mx-auto">
+            {
+                producto && (
+                    <div class="flex flex-wrap gap-4 mb-8">
+                        <a
+                            href="/"
+                            class="border border-[#B58A2A] px-5 py-3 font-['Manrope'] transition-all duration-300 hover:bg-[#B58A2A] hover:text-white hover:shadow-md"
+                        >
+                            ← Volver al inicio
+                        </a>
+
+                        <a
+                            href={`/productos?categoria=${producto.fk_categoria}`}
+                            class="border border-[#B58A2A] px-5 py-3 font-['Manrope'] transition-all duration-300 hover:bg-[#B58A2A] hover:text-white hover:shadow-md"
+                        >
+                            ← Volver a la categoría
+                        </a>
+                    </div>
+                )
+            }
+
+            {
+                producto && (
+                    <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+                        <!-- IMAGEN -->
+                        <div>
+                            <img
+                                src={producto.url_imagen ?? ""}
+                                alt={producto.nombre_producto}
+                                class="w-full h-112.5 object-contain border border-[#B58A2A] bg-white"
+                            />
+                        </div>
+
+                        <!-- INFORMACIÓN -->
+                        <div class="flex flex-col gap-6">
+
+                            <h1 class="font-['Cormorant_Garamond'] text-4xl lg:text-5xl font-semibold">
+                                {producto.nombre_producto}
+                            </h1>
+
+                            <p class="font-['Manrope'] text-lg leading-relaxed">
+                                {producto.descripcion_producto}
+                            </p>
+
+                            <p class="font-['Manrope'] text-2xl font-semibold text-[#B58A2A]">
+                                {Number(producto.precio).toFixed(2)} €
+                            </p>
+
+                            <p class="font-['Manrope'] text-sm">
+                                Precios indicados sin IVA.
+                            </p>
+
+                            <p class="font-['Manrope']">
+                                Stock disponible: {producto.stock}
+                            </p>
+
+                            <div class="flex items-center gap-3">
+                                <span class="font-['Manrope'] font-semibold">Cantidad:</span>
+
+                                <div class="flex items-center border border-[#B58A2A]">
+                                    <button
+                                        id="restar-cantidad"
+                                        type="button"
+                                        class="px-4 py-2 font-['Manrope'] text-xl hover:bg-[#E5D1CB]"
+                                    >
+                                        −
+                                    </button>
+
+                                    <span
+                                        id="cantidad"
+                                        class="px-5 py-2 font-['Manrope'] font-semibold"
+                                    >
+                                        1
+                                    </span>
+
+                                    <button
+                                        id="sumar-cantidad"
+                                        type="button"
+                                        class="px-4 py-2 font-['Manrope'] text-xl hover:bg-[#E5D1CB]"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                id="btn-carrito"
+                                data-id={producto.pk_producto}
+                                data-nombre={producto.nombre_producto}
+                                data-precio={producto.precio}
+                                data-stock={producto.stock}
+                                class="w-fit bg-[#1A1A1A] text-white font-['Manrope'] px-8 py-4 hover:bg-[#B58A2A] transition-colors"
+                            >
+                                Añadir al carrito
+                            </button>
+
+                        </div>
+
+                    </section>
+                )
+            }
+        </div>
+    </main>
+</Layout>
+<script>
+    interface ProductoCarrito {
+        id: string;
+        nombre: string;
+        precio: number;
+        cantidad: number;
+        stock: number;
+    }
+
+    const boton = document.querySelector<HTMLButtonElement>("#btn-carrito");
+
+    const botonRestar =
+        document.querySelector<HTMLButtonElement>("#restar-cantidad");
+
+    const botonSumar =
+        document.querySelector<HTMLButtonElement>("#sumar-cantidad");
+
+    const cantidadElemento =
+        document.querySelector<HTMLElement>("#cantidad");
+
+    let cantidad = 1;
+    const stock = Number(boton?.dataset.stock);
+
+    botonSumar?.addEventListener("click", () => {
+        if (cantidad < stock) {
+            cantidad++;
+            if (cantidadElemento) {
+                cantidadElemento.textContent = String(cantidad);
+            }
+        }
+    });
+
+    botonRestar?.addEventListener("click", () => {
+        if (cantidad > 1) {
+            cantidad--;
+            if (cantidadElemento) {
+                cantidadElemento.textContent = String(cantidad);
+            }
+        }
+    });
+
+    boton?.addEventListener("click", () => {
+        const id = boton.dataset.id;
+        const nombre = boton.dataset.nombre;
+        const precio = boton.dataset.precio;
+
+        if (!id || !nombre || !precio) {
+            return;
+        }
+
+        // Recuperamos el carrito guardado.
+        // Si todavía no existe, empezamos con un array vacío.
+        const carrito: ProductoCarrito[] = JSON.parse(
+            localStorage.getItem("carrito") || "[]"
+        );
+
+        // Buscamos si este producto ya está en el carrito.
+        const productoExistente = carrito.find(
+            (producto) => producto.id === id
+        );
+
+        if (productoExistente) {
+            if (productoExistente.cantidad + cantidad <= stock) {
+                productoExistente.cantidad += cantidad;
+                productoExistente.stock = stock;
+            }
+        } else {
+            carrito.push({
+                id: id,
+                nombre: nombre,
+                precio: Number(precio),
+                cantidad: cantidad,
+                stock: stock
+            });
+        }
+
+        // Guardamos de nuevo todo el carrito.
+        localStorage.setItem(
+            "carrito",
+            JSON.stringify(carrito)
+        );
+
+        // Sumamos todas las unidades del carrito.
+        const total = carrito.reduce(
+            (suma, producto) => suma + producto.cantidad,
+            0
+        );
+
+        // Actualizamos el número del Header.
+        const cantidadCarrito =
+            document.querySelector<HTMLElement>("#cantidad-carrito");
+
+        if (cantidadCarrito) {
+            cantidadCarrito.textContent = String(total);
+        }
+
+        console.log(carrito);
+    });
+</script>

@@ -1,0 +1,38 @@
+---
+import { getCategorias } from "../lib/categorias";
+
+const categorias = await getCategorias();
+
+const imagenesCategorias: Record<number, string> = {
+    1: "/imagenes/categorias/portada_faith.png",
+    2: "/imagenes/categorias/portada_moda.png",
+    3: "/imagenes/categorias/portada-kbeauty.png",
+    4: "/imagenes/categorias/portada_papeleria.png",
+    5: "/imagenes/categorias/portada_hogar.png",
+};
+---
+
+<nav class="bg-[#F7F3ED] p-6 w-full lg:w-96">
+    <ul class="space-y-4">
+        {
+            categorias.map((categoria) => (
+                <li>
+                    <a
+                        href={`/productos?categoria=${categoria.pk_categoria}`}
+                        class="group flex items-center justify-between gap-4"
+                    >
+                        <span class="font-['Manrope'] font-semibold transition-colors duration-300 group-hover:text-[#B58A2A]">
+                            {categoria.nom_categoria}
+                        </span>
+
+                        <img
+                            src={imagenesCategorias[categoria.pk_categoria]}
+                            alt={categoria.nom_categoria}
+                            class="w-28 h-28 object-cover border border-[#B58A2A] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md"
+                        />
+                    </a>
+                </li>
+            ))
+        }
+    </ul>
+</nav>

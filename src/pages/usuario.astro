@@ -1,0 +1,141 @@
+---
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen bg-[#F7F3ED] px-6 py-12">
+
+        <div class="max-w-5xl mx-auto">
+            <h1 class="font-['Cormorant_Garamond'] text-4xl lg:text-5xl font-semibold mb-10">
+                Mi cuenta
+            </h1>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+                <!-- INICIAR SESIÓN -->
+                <div class="border border-[#B58A2A] p-8">
+                    <h2 class="font-['Cormorant_Garamond'] text-3xl font-semibold mb-4">
+                        Iniciar sesión
+                    </h2>
+
+                    <p class="font-['Manrope']">
+                        Accede a tu cuenta de Tu K-Drama.
+                    </p>
+
+                    <form class="mt-6 flex flex-col gap-4">
+
+                        <div class="flex flex-col gap-2">
+                            <label for="email" class="font-['Manrope'] font-semibold">
+                                Correo electrónico
+                            </label>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="border border-[#B58A2A] px-4 py-3 bg-white"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="password" class="font-['Manrope'] font-semibold">
+                                Contraseña
+                            </label>
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="border border-[#B58A2A] px-4 py-3 bg-white"
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            class="mt-2 bg-[#1A1A1A] text-white font-['Manrope'] px-6 py-3 w-fit hover:bg-[#B58A2A] transition-colors"
+                        >
+                            Iniciar sesión
+                        </button>
+
+                    </form>
+                </div>
+
+                <!-- REGISTRO -->
+                <div class="border border-[#B58A2A] p-8">
+                    <h2 class="font-['Cormorant_Garamond'] text-3xl font-semibold mb-4">
+                        Crear cuenta
+                    </h2>
+
+                    <p class="font-['Manrope']">
+                        ¿Es tu primera vez? Regístrate como nuevo cliente.
+                    </p>
+
+                    <form class="mt-6 flex flex-col gap-4">
+
+                        <div class="flex flex-col gap-2">
+                            <label for="nombre" class="font-['Manrope'] font-semibold">
+                                Nombre
+                            </label>
+                            <input
+                                type="text"
+                                id="nombre"
+                                name="nombre"
+                                class="border border-[#B58A2A] px-4 py-3 bg-white"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="apellidos" class="font-['Manrope'] font-semibold">
+                                Apellidos
+                            </label>
+                            <input
+                                type="text"
+                                id="apellidos"
+                                name="apellidos"
+                                class="border border-[#B58A2A] px-4 py-3 bg-white"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="registro-email" class="font-['Manrope'] font-semibold">
+                                Correo electrónico
+                            </label>
+                            <input
+                                type="email"
+                                id="registro-email"
+                                name="email"
+                                class="border border-[#B58A2A] px-4 py-3 bg-white"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="registro-password" class="font-['Manrope'] font-semibold">
+                                Contraseña
+                            </label>
+                            <input
+                                type="password"
+                                id="registro-password"
+                                name="password"
+                                class="border border-[#B58A2A] px-4 py-3 bg-white"
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            class="mt-2 bg-[#1A1A1A] text-white font-['Manrope'] px-6 py-3 w-fit hover:bg-[#B58A2A] transition-colors"
+                        >
+                            Crear cuenta
+                        </button>
+
+                    </form>
+                </div>
+
+            </section>
+        </div>
+
+    </main>
+</Layout>

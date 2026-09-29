@@ -1,0 +1,45 @@
+---
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen bg-[#F7F3ED] px-6 py-12">
+
+        <div class="max-w-5xl mx-auto">
+            <h1 class="font-['Cormorant_Garamond'] text-4xl lg:text-5xl font-semibold mb-10">
+                Mi cuenta
+            </h1>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+                <!-- INICIAR SESIÓN -->
+                <div class="border border-[#B58A2A] p-8">
+                    <h2 class="font-['Cormorant_Garamond'] text-3xl font-semibold mb-4">
+                        Iniciar sesión
+                    </h2>
+
+                    <p class="font-['Manrope']">
+                        Accede a tu cuenta de Tu K-Drama.
+                    </p>
+                </div>
+
+                <!-- REGISTRO -->
+                <div class="border border-[#B58A2A] p-8">
+                    <h2 class="font-['Cormorant_Garamond'] text-3xl font-semibold mb-4">
+                        Crear cuenta
+                    </h2>
+
+                    <p class="font-['Manrope']">
+                        ¿Es tu primera vez? Regístrate como nuevo cliente.
+                    </p>
+                </div>
+
+            </section>
+        </div>
+
+    </main>
+</Layout>

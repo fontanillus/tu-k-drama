@@ -1,0 +1,80 @@
+<header class="grid grid-cols-2 md:grid-cols-3 items-center px-4 md:px-6 py-4 md:py-2 bg-[#E5D1CB]">
+    <div>
+        <a href="/" aria-label="Volver al inicio">
+            <img
+                src="/imagenes/logo-tu-kdrama-sin-fondo.png"
+                alt="Tu K-Drama"
+                class="w-28 md:w-36 transition-transform duration-300 hover:scale-105"
+            />
+        </a>
+    </div>
+    <p
+        class="hidden md:block font-['Cormorant_Garamond'] text-[26px] font-medium text-[#1C1C1C] text-center"
+    >
+        Tu historia favorita, un poco más cerca
+    </p>
+    <div class="justify-self-end flex items-center gap-6">
+        <a href="#" class="flex items-center gap-2 transition-colors duration-300 hover:text-[#B58A2A]">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                class="w-6 h-6"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0"
+                ></path>
+            </svg>
+
+            <span class="font-['Manrope'] text-lg font-semibold">Usuario</span>
+        </a>
+        <a href="/carrito" class="flex items-center gap-2 transition-colors duration-300 hover:text-[#B58A2A]">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                class="w-6 h-6"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M2.25 3h1.386c.51 0 .955.343 1.087.835L5.1 5.25m0 0 1.125 4.2M5.1 5.25h15.15l-1.5 6H6.225m0 0 .375 1.4a2.25 2.25 0 0 0 2.174 1.668h7.976m-8.25 3.75h.008v.008H8.5v-.008Zm8.25 0h.008v.008h-.008v-.008Z"
+                ></path>
+            </svg>
+
+            <span class="font-['Manrope'] text-lg font-semibold">
+                Carrito (<span id="cantidad-carrito">0</span>)
+            </span>
+        </a>
+    </div>
+</header>
+
+<div class="h-0.75 bg-[#B08D57]"></div>
+
+<script>
+    interface ProductoCarrito {
+        cantidad: number;
+    }
+
+    const carrito: ProductoCarrito[] = JSON.parse(
+        localStorage.getItem("carrito") || "[]"
+    );
+
+    const total = carrito.reduce(
+        (suma, producto) => suma + producto.cantidad,
+        0
+    );
+
+    const cantidadCarrito =
+        document.querySelector<HTMLElement>("#cantidad-carrito");
+
+    if (cantidadCarrito) {
+        cantidadCarrito.textContent = String(total);
+    }
+</script>

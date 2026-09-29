@@ -1,0 +1,79 @@
+---
+import { getProductosPorCategoria } from "../lib/productos";
+import { getCategorias } from "../lib/categorias";
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+
+const categoriaParam = Astro.url.searchParams.get("categoria");
+const categoriaId = Number(categoriaParam);
+
+if (!categoriaParam || Number.isNaN(categoriaId)) {
+    return Astro.redirect("/");
+}
+
+const productos = await getProductosPorCategoria(categoriaId);
+const categorias = await getCategorias();
+
+const categoriaActual = categorias.find(
+    (categoria) => categoria.pk_categoria === categoriaId
+);
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen bg-[#F7F3ED] px-6 py-12">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="font-['Cormorant_Garamond'] text-5xl font-semibold">
+                Productos · {categoriaActual?.nom_categoria}
+            </h1>
+
+            <p class="font-['Manrope'] text-sm mt-2">
+                Precios indicados sin IVA.
+            </p>
+
+            <a
+                href="/"
+                class="inline-flex items-center gap-2 mt-5 mb-8 border border-[#B58A2A] px-5 py-2
+                       font-['Manrope'] transition-all duration-300
+                       hover:bg-[#B58A2A] hover:text-white hover:-translate-y-1 hover:shadow-md"
+            >
+                ← Volver al inicio
+            </a>
+
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {
+                    productos.map((producto) => (
+                        <a
+                            href={`/producto?id=${producto.pk_producto}`}
+                            class="block h-full"
+                        >
+                            <article class="h-full flex flex-col border border-[#B58A2A] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                                <img
+                                    src={producto.url_imagen ?? ""}
+                                    alt={producto.nombre_producto}
+                                    class="w-full h-80 object-contain bg-white p-3"
+                                />
+
+                                <div class="p-4 flex flex-col flex-1">
+                                    <h2 class="font-['Cormorant_Garamond'] text-2xl font-semibold">
+                                        {producto.nombre_producto}
+                                    </h2>
+
+                                    <p class="font-['Manrope']">
+                                        {producto.descripcion_producto}
+                                    </p>
+
+                                    <p class="font-['Manrope'] font-semibold text-[#B58A2A] mt-auto pt-2">
+                                        {Number(producto.precio).toFixed(2)} €
+                                    </p>
+                                </div>
+                            </article>
+                        </a>
+                    ))
+                }
+            </section>
+        </div>
+    </main>
+</Layout>

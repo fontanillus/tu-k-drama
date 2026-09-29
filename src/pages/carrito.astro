@@ -1,0 +1,178 @@
+---
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen bg-[#F7F3ED] px-6 py-12">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="font-['Cormorant_Garamond'] text-5xl font-semibold">
+                Mi carrito
+            </h1>
+            <div id="lista-carrito" class="mt-10 space-y-6">
+            </div>
+            <div class="mt-10 text-right">
+                <p class="font-['Cormorant_Garamond'] text-3xl font-semibold">
+                    Total: <span id="total-carrito">0.00</span> €
+                </p>
+            </div>
+        </div>
+    </main>
+</Layout>
+<script>
+    interface ProductoCarrito {
+        id: string;
+        nombre: string;
+        precio: number;
+        cantidad: number;
+        stock: number;
+    }
+
+    const carrito: ProductoCarrito[] = JSON.parse(
+        localStorage.getItem("carrito") || "[]"
+    );
+
+    const total = carrito.reduce(
+        (suma, producto) => suma + producto.precio * producto.cantidad,
+        0
+    );
+
+    const totalElemento =
+        document.querySelector<HTMLElement>("#total-carrito");
+
+    if (totalElemento) {
+        totalElemento.textContent = total.toFixed(2);
+    }
+
+    const listaCarrito =
+        document.querySelector<HTMLElement>("#lista-carrito");
+
+    if (listaCarrito) {
+        carrito.forEach((producto) => {
+
+            const subtotal = producto.precio * producto.cantidad;
+
+            listaCarrito.innerHTML += `
+                <div class="border border-[#B58A2A] p-6">
+
+                    <h2 class="font-['Cormorant_Garamond'] text-2xl font-semibold">
+                        ${producto.nombre}
+                    </h2>
+
+                    <p class="font-['Manrope'] mt-2">
+                        Precio: ${producto.precio.toFixed(2)} €
+                    </p>
+
+                    <div class="flex items-center gap-3 mt-2 font-['Manrope']">
+                        <span>Cantidad:</span>
+
+                        <button
+                            class="btn-restar border border-[#B58A2A] px-3 py-1
+                                   transition-colors duration-300 hover:bg-[#E5D1CB]"
+                            data-id="${producto.id}"
+                        >
+                            −
+                        </button>
+
+                        <span>${producto.cantidad}</span>
+
+                        <button
+                            class="btn-sumar border border-[#B58A2A] px-3 py-1
+                                   transition-colors duration-300 hover:bg-[#E5D1CB]"
+                            data-id="${producto.id}"
+                        >
+                            +
+                        </button>
+                    </div>
+
+                    <p class="font-['Manrope'] font-semibold mt-2">
+                        Subtotal: ${subtotal.toFixed(2)} €
+                    </p>
+
+                    <button
+                        class="btn-eliminar mt-4 px-4 py-2 bg-[#1C1C1C] text-white font-['Manrope']
+                               transition-colors duration-300 hover:bg-[#B58A2A]"
+                        data-id="${producto.id}"
+                    >
+                        Eliminar
+                    </button>
+
+                </div>
+            `;
+        });
+    }
+
+    const botonesEliminar =
+        document.querySelectorAll<HTMLButtonElement>(".btn-eliminar");
+
+    botonesEliminar.forEach((botonEliminar) => {
+        botonEliminar.addEventListener("click", () => {
+
+            const id = botonEliminar.dataset.id;
+
+            const carritoActualizado = carrito.filter(
+                (producto) => producto.id !== id
+            );
+
+            localStorage.setItem(
+                "carrito",
+                JSON.stringify(carritoActualizado)
+            );
+
+            location.reload();
+        });
+    });
+
+    const botonesSumar =
+        document.querySelectorAll<HTMLButtonElement>(".btn-sumar");
+
+    botonesSumar.forEach((botonSumar) => {
+        botonSumar.addEventListener("click", () => {
+
+            const id = botonSumar.dataset.id;
+
+            const producto = carrito.find(
+                (producto) => producto.id === id
+            );
+
+            if (producto && producto.cantidad < producto.stock) {
+                producto.cantidad++;
+
+                localStorage.setItem(
+                    "carrito",
+                    JSON.stringify(carrito)
+                );
+
+                location.reload();
+            }
+        });
+    });
+
+    const botonesRestar =
+        document.querySelectorAll<HTMLButtonElement>(".btn-restar");
+
+    botonesRestar.forEach((botonRestar) => {
+        botonRestar.addEventListener("click", () => {
+
+            const id = botonRestar.dataset.id;
+
+            const producto = carrito.find(
+                (producto) => producto.id === id
+            );
+
+            if (producto && producto.cantidad > 1) {
+                producto.cantidad--;
+
+                localStorage.setItem(
+                    "carrito",
+                    JSON.stringify(carrito)
+                );
+
+                location.reload();
+            }
+        });
+    });
+</script>
