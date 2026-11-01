@@ -12,14 +12,71 @@ import Header from "../components/Header.astro";
             <h1 class="font-['Cormorant_Garamond'] text-5xl font-semibold">
                 Mi carrito
             </h1>
+            <a
+                href="/"
+                class="inline-flex items-center gap-2 mt-5 border border-[#B58A2A] px-5 py-2
+                       font-['Manrope'] transition-all duration-300
+                       hover:bg-[#B58A2A] hover:text-white hover:-translate-y-1 hover:shadow-md"
+            >
+                ← Volver al inicio
+            </a>
             <div id="lista-carrito" class="mt-10 space-y-6">
             </div>
             <div class="mt-10 text-right">
                 <p class="font-['Cormorant_Garamond'] text-3xl font-semibold">
                     Total: <span id="total-carrito">0.00</span> €
                 </p>
+
+                <button
+                    id="finalizar-compra"
+                    type="button"
+                    class="hidden mt-6 w-fit ml-auto bg-[#1C1C1C] text-white
+                           px-8 py-3 font-['Manrope'] font-semibold
+                           transition-colors duration-300 hover:bg-[#B58A2A]"
+                >
+                    Finalizar compra
+                </button>
+
+                <p id="carrito-vacio" class="hidden mt-6 font-['Manrope']">
+                    Tu carrito está vacío.
+                </p>
             </div>
         </div>
+        <dialog
+            id="dialogo-aviso"
+            class="m-auto max-w-md w-[90%] p-8 bg-[#F7F3ED]
+                   border border-[#B58A2A] shadow-xl
+                   backdrop:bg-black/50"
+        >
+            <h2 class="font-['Cormorant_Garamond'] text-3xl font-semibold mb-4">
+                Aviso de Tu K-Drama
+            </h2>
+
+            <p id="mensaje-aviso" class="font-['Manrope'] mb-6"></p>
+
+            <div class="flex flex-wrap items-center justify-end gap-4 mt-6">
+                <a
+                    id="enlace-iniciar-sesion"
+                    href="/usuario"
+                    class="hidden bg-[#B58A2A] text-white px-6 py-3
+                           font-['Manrope'] font-semibold text-center
+                           hover:bg-[#9A7623] transition-colors"
+                >
+                    Iniciar sesión
+                </a>
+
+                <form method="dialog">
+                    <button
+                        type="submit"
+                        class="bg-[#1C1C1C] text-white px-6 py-3
+                               font-['Manrope'] font-semibold
+                               hover:opacity-80 transition-colors cursor-pointer"
+                    >
+                        Aceptar
+                    </button>
+                </form>
+            </div>
+        </dialog>
     </main>
 </Layout>
 <script>
@@ -31,27 +88,47 @@ import Header from "../components/Header.astro";
         stock: number;
     }
 
-    const carrito: ProductoCarrito[] = JSON.parse(
+    let carrito: ProductoCarrito[] = JSON.parse(
         localStorage.getItem("carrito") || "[]"
     );
 
-    const total = carrito.reduce(
-        (suma, producto) => suma + producto.precio * producto.cantidad,
-        0
-    );
+    function actualizarEstadoCarrito() {
+        const boton = document.getElementById("finalizar-compra");
+        const mensaje = document.getElementById("carrito-vacio");
 
-    const totalElemento =
-        document.querySelector<HTMLElement>("#total-carrito");
+        const hayProductos = carrito.length > 0;
 
-    if (totalElemento) {
-        totalElemento.textContent = total.toFixed(2);
+        boton?.classList.toggle("hidden", !hayProductos);
+        boton?.classList.toggle("block", hayProductos);
+        mensaje?.classList.toggle("hidden", hayProductos);
     }
+
+    function actualizarTotal() {
+        const total = carrito.reduce(
+            (suma, producto) => suma + producto.precio * producto.cantidad,
+            0
+        );
+
+        const totalElemento =
+            document.querySelector<HTMLElement>("#total-carrito");
+
+        if (totalElemento) {
+            totalElemento.textContent = total.toFixed(2);
+        }
+
+        actualizarEstadoCarrito();
+    }
+
+    actualizarTotal();
 
     const listaCarrito =
         document.querySelector<HTMLElement>("#lista-carrito");
 
-    if (listaCarrito) {
-        carrito.forEach((producto) => {
+    function mostrarCarrito() {
+        if (listaCarrito) {
+            listaCarrito.innerHTML = "";
+
+            carrito.forEach((producto) => {
 
             const subtotal = producto.precio * producto.cantidad;
 
@@ -88,6 +165,10 @@ import Header from "../components/Header.astro";
                         </button>
                     </div>
 
+                    <p class="mensaje-stock font-['Manrope'] text-sm font-semibold text-[#B08D57] mt-2 ${producto.cantidad >= producto.stock ? "" : "hidden"}">
+                        Has alcanzado el stock disponible (${producto.stock} unidades).
+                    </p>
+
                     <p class="font-['Manrope'] font-semibold mt-2">
                         Subtotal: ${subtotal.toFixed(2)} €
                     </p>
@@ -102,8 +183,13 @@ import Header from "../components/Header.astro";
 
                 </div>
             `;
-        });
+            });
+        }
     }
+
+    mostrarCarrito();
+
+    function activarBotones() {
 
     const botonesEliminar =
         document.querySelectorAll<HTMLButtonElement>(".btn-eliminar");
@@ -113,16 +199,20 @@ import Header from "../components/Header.astro";
 
             const id = botonEliminar.dataset.id;
 
-            const carritoActualizado = carrito.filter(
+            carrito = carrito.filter(
                 (producto) => producto.id !== id
             );
 
             localStorage.setItem(
                 "carrito",
-                JSON.stringify(carritoActualizado)
+                JSON.stringify(carrito)
             );
 
-            location.reload();
+            window.dispatchEvent(new Event("cestaUpdated"));
+
+            mostrarCarrito();
+            actualizarTotal();
+            activarBotones();
         });
     });
 
@@ -146,7 +236,11 @@ import Header from "../components/Header.astro";
                     JSON.stringify(carrito)
                 );
 
-                location.reload();
+                window.dispatchEvent(new Event("cestaUpdated"));
+
+                mostrarCarrito();
+                actualizarTotal();
+                activarBotones();
             }
         });
     });
@@ -171,8 +265,66 @@ import Header from "../components/Header.astro";
                     JSON.stringify(carrito)
                 );
 
-                location.reload();
+                window.dispatchEvent(new Event("cestaUpdated"));
+
+                mostrarCarrito();
+                actualizarTotal();
+                activarBotones();
             }
         });
+    });
+    }
+
+    activarBotones();
+
+    const dialogoAviso = document.querySelector<HTMLDialogElement>("#dialogo-aviso");
+    const mensajeAviso = document.getElementById("mensaje-aviso");
+
+    const enlaceIniciarSesion = document.querySelector<HTMLAnchorElement>(
+        "#enlace-iniciar-sesion"
+    );
+
+    function mostrarAviso(mensaje: string, requiereLogin = false) {
+        if (mensajeAviso) mensajeAviso.textContent = mensaje;
+
+        enlaceIniciarSesion?.classList.toggle("hidden", !requiereLogin);
+
+        dialogoAviso?.showModal();
+    }
+
+    const botonFinalizar = document.getElementById("finalizar-compra");
+
+    botonFinalizar?.addEventListener("click", async () => {
+        try {
+            const respuesta = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    productos: carrito.map((producto) => ({
+                        id: producto.id,
+                        cantidad: producto.cantidad,
+                    })),
+                }),
+            });
+
+            const resultado = await respuesta.json();
+
+            if (!respuesta.ok) {
+                mostrarAviso(
+                    resultado.error || "Error al iniciar el pago",
+                    respuesta.status === 401
+                );
+                return;
+            }
+
+            if (resultado.url) {
+                window.location.href = resultado.url;
+            }
+        } catch (error) {
+            console.error("Error al conectar con Stripe:", error);
+            mostrarAviso("No se pudo conectar con Stripe");
+        }
     });
 </script>

@@ -14,6 +14,8 @@ import Footer from "../components/Footer.astro";
 
     <body>
         <slot />
-        <Footer />
+        <div class="print:hidden">
+            <Footer />
+        </div>
     </body>
 </html>

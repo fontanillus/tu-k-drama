@@ -1,0 +1,151 @@
+---
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Stripe from "stripe";
+import { crearFactura } from "../lib/facturas";
+const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
+
+const sessionId = Astro.url.searchParams.get("session_id");
+
+let pagoExitoso = false;
+let errorMessage = "";
+let facturaId: number | null = null;
+
+if (!sessionId) {
+    errorMessage = "No se encontró una sesión de pago válida.";
+} else {
+    try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+        if (session.payment_status === "paid") {
+            const clienteId = session.metadata?.userId;
+
+            const paymentIntentId =
+                typeof session.payment_intent === "string"
+                    ? session.payment_intent
+                    : session.payment_intent?.id;
+
+            if (clienteId && paymentIntentId) {
+                const lineas = await stripe.checkout.sessions.listLineItems(
+                    sessionId,
+                    { expand: ["data.price.product"], limit: 100 }
+                );
+
+                const productos = [];
+
+                for (const linea of lineas.data) {
+                    const productoStripe = linea.price?.product;
+
+                    if (
+                        !productoStripe ||
+                        typeof productoStripe === "string" ||
+                        productoStripe.deleted === true
+                    ) {
+                        throw new Error("No se pudo identificar un producto de Stripe");
+                    }
+
+                    const productoId = Number(productoStripe.metadata?.producto_id);
+                    const cantidad = linea.quantity ?? 0;
+                    const precio = (linea.price?.unit_amount ?? 0) / 100;
+
+                    if (
+                        !Number.isSafeInteger(productoId) ||
+                        productoId <= 0 ||
+                        !Number.isSafeInteger(cantidad) ||
+                        cantidad <= 0 ||
+                        !Number.isFinite(precio) ||
+                        precio <= 0
+                    ) {
+                        throw new Error("Datos de producto no válidos en Stripe");
+                    }
+
+                    productos.push({ productoId, cantidad, precio });
+                }
+
+                const factura = await crearFactura({
+                    clienteId,
+                    stripePaymentIntentId: paymentIntentId,
+                    iva: 21,
+                    metodoPago: "Stripe",
+                    referenciaPago: paymentIntentId,
+                    banco: null,
+                    productos,
+                });
+
+                facturaId = factura.pk_factura;
+                pagoExitoso = true;
+            } else {
+                errorMessage = "Faltan datos del cliente o del pago.";
+            }
+        } else {
+            errorMessage = "El pago todavía no está confirmado.";
+        }
+    } catch (error) {
+        console.error("Error al verificar el pago:", error);
+        errorMessage = "No se pudo verificar el pago con Stripe.";
+    }
+}
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen bg-[#F7F3ED] px-6 py-20">
+        <section class="max-w-2xl mx-auto text-center">
+            <h1 class="font-['Cormorant_Garamond'] text-5xl font-semibold mb-6">
+                {
+                    pagoExitoso
+                        ? "¡Gracias por tu compra!"
+                        : "¡Ups! Algo no ha salido como esperábamos"
+                }
+            </h1>
+
+            <p class="font-['Manrope'] text-lg mb-4">
+                {
+                    pagoExitoso
+                        ? "Tu pago se ha realizado correctamente."
+                        : "No hemos podido confirmar tu pago."
+                }
+            </p>
+
+            <p class="font-['Manrope'] mb-10">
+                {
+                    pagoExitoso
+                        ? "El pago se ha realizado satisfactoriamente."
+                        : "Por favor, comprueba el estado de tu compra antes de intentarlo de nuevo."
+                }
+            </p>
+
+            {
+                pagoExitoso && facturaId !== null && (
+                    <a
+                        href={`/factura?id=${facturaId}`}
+                        class="inline-block bg-[#B58A2A] text-white px-8 py-3
+                               font-['Manrope'] font-semibold mb-4
+                               transition-colors duration-300 hover:bg-[#1C1C1C]"
+                    >
+                        Ver factura
+                    </a>
+                )
+            }
+
+            <a
+                href="/"
+                class="inline-block bg-[#1C1C1C] text-white px-8 py-3
+                       font-['Manrope'] font-semibold
+                       transition-colors duration-300 hover:bg-[#B58A2A]"
+            >
+                Volver a la tienda
+            </a>
+        </section>
+    </main>
+</Layout>
+{
+    pagoExitoso && (
+        <script>
+            localStorage.removeItem("carrito");
+            window.dispatchEvent(new Event("cestaUpdated"));
+        </script>
+    )
+}

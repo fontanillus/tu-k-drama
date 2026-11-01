@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.10",
+    "@supabase/supabase-js": "^2.117.2",
     "@tailwindcss/vite": "^4.2.3",
     "astro": "^6.3.7",
     "pg": "^8.23.0",
+    "stripe": "^23.1.0",
     "tailwindcss": "^4.2.3"
   },
   "allowScripts": {

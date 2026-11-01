@@ -69,25 +69,88 @@
                     Recibe novedades, productos y un poquito de K-Drama en tu bandeja de entrada.
                 </p>
 
-                <form class="flex flex-col sm:flex-row justify-center gap-3">
-                    <input
-                        type="email"
-                        placeholder="Tu email"
-                        aria-label="Correo electrónico"
-                        class="w-full sm:flex-1 bg-white border border-[#B58A2A] px-4 py-3 font-['Manrope'] outline-none focus:ring-2 focus:ring-[#B58A2A]"
-                    />
+                <form id="form-newsletter" class="flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row justify-center gap-3">
+                        <input
+                            type="email"
+                            name="email"
+                            required
+                            maxlength="255"
+                            autocomplete="email"
+                            placeholder="Tu email"
+                            aria-label="Correo electrónico"
+                            class="w-full sm:flex-1 min-w-0 bg-white border border-[#B58A2A] px-4 py-3 font-['Manrope'] outline-none focus:ring-2 focus:ring-[#B58A2A]"
+                        />
 
-                    <button
-                        type="button"
-                        class="bg-[#1A1A1A] text-white font-['Manrope'] font-semibold px-6 py-3
-                               transition-all duration-300
-                               hover:bg-[#B58A2A] hover:shadow-md"
-                    >
-                        SUSCRIBIRME
-                    </button>
+                        <button
+                            type="submit"
+                            class="bg-[#1A1A1A] text-white font-['Manrope'] font-semibold px-6 py-3 transition-all duration-300 hover:bg-[#B58A2A] hover:shadow-md disabled:opacity-50"
+                        >
+                            SUSCRIBIRME
+                        </button>
+                    </div>
+
+                    <label class="flex items-start justify-center gap-2 text-sm font-['Manrope'] text-left">
+                        <input
+                            type="checkbox"
+                            name="consentimiento"
+                            required
+                            class="mt-1 accent-[#B58A2A]"
+                        />
+                        <span>Acepto recibir novedades y comunicaciones comerciales de Tu K-Drama.</span>
+                    </label>
+
+                    <p
+                        id="mensaje-newsletter"
+                        role="status"
+                        aria-live="polite"
+                        class="text-base font-['Manrope'] font-semibold text-center min-h-6"
+                    ></p>
                 </form>
             </div>
         </div>
+
+        <script>
+            const formulario = document.querySelector<HTMLFormElement>("#form-newsletter");
+            const mensaje = document.querySelector<HTMLElement>("#mensaje-newsletter");
+
+            formulario?.addEventListener("submit", async (evento) => {
+                evento.preventDefault();
+
+                if (!mensaje || !formulario) return;
+
+                const boton = formulario.querySelector<HTMLButtonElement>('button[type="submit"]');
+                const datos = new FormData(formulario);
+
+                mensaje.textContent = "";
+                if (boton) boton.disabled = true;
+
+                try {
+                    const respuesta = await fetch("/api/newsletter", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            email: datos.get("email"),
+                            consentimiento: datos.get("consentimiento") === "on"
+                        })
+                    });
+
+                    const resultado = await respuesta.json();
+
+                    mensaje.textContent = respuesta.ok
+                        ? resultado.mensaje
+                        : resultado.error;
+
+                    if (respuesta.ok) {
+                        formulario.reset();
+                    }
+                } catch {
+                    mensaje.textContent = "Error de conexión. Inténtalo de nuevo.";
+                } finally {
+                    if (boton) boton.disabled = false;
+                }
+            });
+        </script>
 
         <p class="font-['Manrope'] text-base text-center mt-3 pt-3 border-t border-[#B58A2A]">
             © 2026 Tu K-Drama

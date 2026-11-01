@@ -45,35 +45,149 @@ const categoriaActual = categorias.find(
             <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {
                     productos.map((producto) => (
-                        <a
-                            href={`/producto?id=${producto.pk_producto}`}
-                            class="block h-full"
-                        >
-                            <article class="h-full flex flex-col border border-[#B58A2A] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                        <article class="h-full flex flex-col border border-[#B58A2A] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                            <a
+                                href={`/producto?id=${producto.pk_producto}`}
+                                class="block"
+                            >
                                 <img
                                     src={producto.url_imagen ?? ""}
                                     alt={producto.nombre_producto}
                                     class="w-full h-80 object-contain bg-white p-3"
                                 />
+                            </a>
 
-                                <div class="p-4 flex flex-col flex-1">
+                            <div class="p-4 flex flex-col flex-1">
+                                <a href={`/producto?id=${producto.pk_producto}`}>
                                     <h2 class="font-['Cormorant_Garamond'] text-2xl font-semibold">
                                         {producto.nombre_producto}
                                     </h2>
+                                </a>
 
-                                    <p class="font-['Manrope']">
-                                        {producto.descripcion_producto}
-                                    </p>
+                                <p class="font-['Manrope']">
+                                    {producto.descripcion_producto}
+                                </p>
 
-                                    <p class="font-['Manrope'] font-semibold text-[#B58A2A] mt-auto pt-2">
-                                        {Number(producto.precio).toFixed(2)} €
-                                    </p>
-                                </div>
-                            </article>
-                        </a>
+                                <p class="font-['Manrope'] font-semibold text-[#B58A2A] mt-auto pt-2">
+                                    {Number(producto.precio).toFixed(2)} €
+                                </p>
+
+                                <a
+                                    href={`/producto?id=${producto.pk_producto}`}
+                                    class="mt-4 border border-[#B58A2A] px-5 py-3 text-center
+                                           font-['Manrope'] transition-all duration-300
+                                           hover:bg-[#B58A2A] hover:text-white"
+                                >
+                                    Ver detalles
+                                </a>
+
+                                <button
+                                    type="button"
+                                    class="btn-agregar mt-2 bg-[#1C1C1C] text-white px-5 py-3 font-['Manrope'] transition-all duration-300 hover:bg-[#B58A2A]"
+                                    data-id={producto.pk_producto}
+                                    data-nombre={producto.nombre_producto}
+                                    data-precio={producto.precio}
+                                    data-stock={producto.stock}
+                                >
+                                    Añadir al carrito
+                                </button>
+                            </div>
+                        </article>
                     ))
                 }
             </section>
+            <!-- VOLVER AL INICIO AL FINAL DEL LISTADO -->
+            <div class="flex justify-center mt-10">
+                <a
+                    href="/"
+                    class="inline-flex items-center justify-center gap-2
+                           border border-[#B58A2A] px-5 py-3
+                           font-['Manrope'] text-center
+                           transition-all duration-300
+                           hover:bg-[#B58A2A] hover:text-white
+                           hover:-translate-y-1 hover:shadow-md"
+                >
+                    ← Volver al inicio
+                </a>
+            </div>
         </div>
+        <dialog
+            id="dialog-stock"
+            class="m-auto max-w-md w-[90%] p-8 bg-[#F7F3ED]
+                   border border-[#B58A2A] shadow-xl
+                   backdrop:bg-black/50"
+        >
+            <h2 class="font-['Cormorant_Garamond'] text-3xl font-semibold mb-4">
+                Stock disponible
+            </h2>
+
+            <p class="font-['Manrope'] mb-6">
+                Has alcanzado la cantidad máxima disponible de este producto.
+            </p>
+
+            <form method="dialog" class="flex justify-end">
+                <button
+                    type="submit"
+                    class="bg-[#1C1C1C] text-white px-6 py-3
+                           font-['Manrope'] font-semibold
+                           hover:opacity-80 transition-opacity cursor-pointer"
+                >
+                    Aceptar
+                </button>
+            </form>
+        </dialog>
     </main>
 </Layout>
+
+<script>
+    interface ProductoCarrito {
+        id: string;
+        nombre: string;
+        precio: number;
+        cantidad: number;
+        stock: number;
+    }
+
+    document.querySelectorAll<HTMLButtonElement>(".btn-agregar")
+        .forEach((boton) => {
+            boton.addEventListener("click", () => {
+                const { id, nombre, precio, stock } = boton.dataset;
+
+                if (!id || !nombre || !precio || !stock) return;
+
+                const stockDisponible = Number(stock);
+
+                if (stockDisponible <= 0) return;
+
+                const carrito: ProductoCarrito[] = JSON.parse(
+                    localStorage.getItem("carrito") || "[]"
+                );
+
+                const existente = carrito.find(
+                    (producto) => producto.id === id
+                );
+
+                if (existente) {
+                    if (existente.cantidad >= stockDisponible) {
+                        const dialogStock = document.querySelector<HTMLDialogElement>("#dialog-stock");
+                        dialogStock?.showModal();
+                        return;
+                    }
+
+                    existente.cantidad++;
+                    existente.stock = stockDisponible;
+                } else {
+                    carrito.push({
+                        id,
+                        nombre,
+                        precio: Number(precio),
+                        cantidad: 1,
+                        stock: stockDisponible
+                    });
+                }
+
+                localStorage.setItem("carrito", JSON.stringify(carrito));
+                window.dispatchEvent(new Event("cestaUpdated"));
+            });
+        });
+</script>

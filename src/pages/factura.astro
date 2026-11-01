@@ -1,0 +1,254 @@
+---
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import pool from "../lib/db";
+import { supabase } from "../lib/supabase";
+
+const facturaId = Number(Astro.url.searchParams.get("id"));
+
+const accessToken = Astro.cookies.get("sb-access-token")?.value;
+const refreshToken = Astro.cookies.get("sb-refresh-token")?.value;
+
+let factura = null;
+let productos = [];
+let errorMessage = "";
+
+if (!accessToken || !refreshToken) {
+    return Astro.redirect("/usuario");
+}
+
+const { data, error } = await supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+});
+
+if (error || !data.user) {
+    return Astro.redirect("/usuario");
+}
+
+if (!Number.isSafeInteger(facturaId) || facturaId <= 0) {
+    errorMessage = "Número de factura no válido.";
+} else {
+    const resultado = await pool.query(
+        `SELECT
+            f.*,
+            c.nombres_cliente,
+            c.apellido1_cliente,
+            c.apellido2_cliente
+         FROM facturas f
+         INNER JOIN clientes c
+             ON c.pk_cliente = f.fk_cliente
+         WHERE f.pk_factura = $1
+           AND f.fk_cliente = $2`,
+        [facturaId, data.user.id]
+    );
+
+    factura = resultado.rows[0] ?? null;
+
+    if (!factura) {
+        errorMessage = "Factura no encontrada.";
+    } else {
+        const detalles = await pool.query(
+            `SELECT
+                d.cantidad,
+                d.precio,
+                d.precio_total,
+                p.nombre_producto
+             FROM detalle_factura d
+             JOIN productos p
+               ON p.pk_producto = d.fk_producto
+             WHERE d.fk_factura = $1`,
+            [facturaId]
+        );
+
+        productos = detalles.rows;
+    }
+}
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen print:min-h-0 bg-[#F7F3ED] px-6 py-12 print:p-0">
+        <section class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-semibold mb-8">
+                Mi factura
+            </h1>
+
+            {
+                errorMessage ? (
+                    <p>{errorMessage}</p>
+                ) : factura ? (
+                    <div
+                        id="documento-factura"
+                        class="bg-white p-4 sm:p-8 shadow-sm print:shadow-none print:p-0"
+                    >
+                        <h2 class="text-2xl font-semibold mb-4">
+                            Tu K-Drama
+                        </h2>
+
+                        <p>
+                            <strong>Factura:</strong>{" "}
+                            {factura.numero_factura}
+                        </p>
+
+                        <p>
+                            <strong>Fecha:</strong>{" "}
+                            {new Date(factura.fecha_compra).toLocaleDateString("es-ES")}
+                        </p>
+
+                        <div class="mt-6 mb-6 font-['Manrope']">
+                            <h3 class="font-semibold mb-2">Datos del cliente</h3>
+
+                            <p>
+                                {[
+                                    factura.nombres_cliente,
+                                    factura.apellido1_cliente,
+                                    factura.apellido2_cliente
+                                ].filter(Boolean).join(" ")}
+                            </p>
+                        </div>
+
+                        <div class="w-full overflow-x-auto print:overflow-visible">
+                            <table class="w-full min-w-[520px] mt-8 border-collapse text-sm sm:text-base print:min-w-0">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-3">Producto</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-right">Precio</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {productos.map((producto) => (
+                                    <tr class="border-b">
+                                        <td class="py-3">{producto.nombre_producto}</td>
+                                        <td class="text-center">{producto.cantidad}</td>
+                                        <td class="text-right">
+                                            {Number(producto.precio).toLocaleString("es-ES", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            })} €
+                                        </td>
+                                        <td class="text-right">
+                                            {Number(producto.precio_total).toLocaleString("es-ES", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            })} €
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        </div>
+
+                        <div class="mt-6 ml-auto max-w-xs space-y-2 font-['Manrope']">
+                            {(() => {
+                                const total = productos.reduce(
+                                    (suma, producto) =>
+                                        suma + Number(producto.precio_total),
+                                    0
+                                );
+
+                                const iva = Number(factura.iva);
+                                const baseImponible = Math.round(
+                                    (total / (1 + iva / 100)) * 100
+                                ) / 100;
+                                const importeIVA = Math.round((total - baseImponible) * 100) / 100;
+
+                                return (
+                                    <>
+                                        <p class="flex justify-between">
+                                            <span>Base imponible:</span>
+                                            <span>{baseImponible.toLocaleString("es-ES", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            })} €</span>
+                                        </p>
+
+                                        <p class="flex justify-between">
+                                            <span>IVA ({iva}%):</span>
+                                            <span>{importeIVA.toLocaleString("es-ES", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            })} €</span>
+                                        </p>
+
+                                        <p class="flex justify-between border-t pt-3 text-xl font-semibold">
+                                            <span>Total:</span>
+                                            <span>{total.toLocaleString("es-ES", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            })} €</span>
+                                        </p>
+                                    </>
+                                );
+                            })()}
+                        </div>
+
+                        <footer class="mt-10 border-t border-gray-200 pt-4 text-center text-xs text-gray-500">
+                            Tu K-Drama · Documento de compra · Pago mediante Stripe
+                        </footer>
+
+                        <button
+                            onclick="window.print()"
+                            class="mt-8 bg-[#1C1C1C] text-white px-6 py-3
+                                   hover:bg-[#B58A2A] transition-colors print:hidden"
+                        >
+                            Imprimir / Guardar PDF
+                        </button>
+                        <a
+                            href="/"
+                            class="inline-block mt-8 ml-3 bg-[#B58A2A] text-white px-6 py-3
+                                   font-['Manrope'] font-semibold
+                                   transition-colors duration-300 hover:bg-[#1C1C1C]
+                                   print:hidden"
+                        >
+                            Volver a la tienda
+                        </a>
+                    </div>
+                ) : null
+            }
+        </section>
+    </main>
+</Layout>
+
+<style is:global>
+    @media print {
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        body {
+            background: white !important;
+        }
+
+        body > header,
+        body > footer,
+        header,
+        body footer:not(#documento-factura footer) {
+            display: none !important;
+        }
+
+        #documento-factura {
+            box-shadow: none !important;
+            width: 100%;
+        }
+
+        #documento-factura thead {
+            display: table-header-group;
+        }
+
+        #documento-factura tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        #documento-factura button,
+        #documento-factura a {
+            display: none !important;
+        }
+    }
+</style>

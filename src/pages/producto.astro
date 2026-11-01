@@ -104,6 +104,13 @@ const producto = await getProductoPorId(productoId);
                                 </div>
                             </div>
 
+                            <p
+                                id="mensaje-stock"
+                                class="hidden font-['Manrope'] text-sm font-semibold text-[#B08D57]"
+                            >
+                                Has alcanzado el stock disponible ({producto?.stock} unidades).
+                            </p>
+
                             <button
                                 id="btn-carrito"
                                 data-id={producto.pk_producto}
@@ -123,28 +130,45 @@ const producto = await getProductoPorId(productoId);
         </div>
     </main>
 </Layout>
-<script>
-    interface ProductoCarrito {
-        id: string;
-        nombre: string;
-        precio: number;
-        cantidad: number;
-        stock: number;
-    }
+<script define:vars={{ stockProducto: producto?.stock ?? 0 }} is:inline>
+    /**
+     * @typedef {Object} ProductoCarrito
+     * @property {string} id
+     * @property {string} nombre
+     * @property {number} precio
+     * @property {number} cantidad
+     * @property {number} stock
+     */
 
-    const boton = document.querySelector<HTMLButtonElement>("#btn-carrito");
+    /** @type {HTMLButtonElement | null} */
+    const boton = document.querySelector("#btn-carrito");
 
+    /** @type {HTMLButtonElement | null} */
     const botonRestar =
-        document.querySelector<HTMLButtonElement>("#restar-cantidad");
+        document.querySelector("#restar-cantidad");
 
+    /** @type {HTMLButtonElement | null} */
     const botonSumar =
-        document.querySelector<HTMLButtonElement>("#sumar-cantidad");
+        document.querySelector("#sumar-cantidad");
 
+    /** @type {HTMLElement | null} */
     const cantidadElemento =
-        document.querySelector<HTMLElement>("#cantidad");
+        document.querySelector("#cantidad");
 
     let cantidad = 1;
-    const stock = Number(boton?.dataset.stock);
+    const stock = stockProducto;
+
+    /** @type {HTMLElement | null} */
+    const mensajeStock =
+        document.querySelector("#mensaje-stock");
+
+    function actualizarMensajeStock() {
+        if (mensajeStock) {
+            mensajeStock.classList.toggle("hidden", cantidad < stock);
+        }
+    }
+
+    actualizarMensajeStock();
 
     botonSumar?.addEventListener("click", () => {
         if (cantidad < stock) {
@@ -152,6 +176,7 @@ const producto = await getProductoPorId(productoId);
             if (cantidadElemento) {
                 cantidadElemento.textContent = String(cantidad);
             }
+            actualizarMensajeStock();
         }
     });
 
@@ -161,6 +186,7 @@ const producto = await getProductoPorId(productoId);
             if (cantidadElemento) {
                 cantidadElemento.textContent = String(cantidad);
             }
+            actualizarMensajeStock();
         }
     });
 
@@ -175,7 +201,8 @@ const producto = await getProductoPorId(productoId);
 
         // Recuperamos el carrito guardado.
         // Si todavía no existe, empezamos con un array vacío.
-        const carrito: ProductoCarrito[] = JSON.parse(
+        /** @type {ProductoCarrito[]} */
+        const carrito = JSON.parse(
             localStorage.getItem("carrito") || "[]"
         );
 
@@ -184,11 +211,26 @@ const producto = await getProductoPorId(productoId);
             (producto) => producto.id === id
         );
 
-        if (productoExistente) {
-            if (productoExistente.cantidad + cantidad <= stock) {
-                productoExistente.cantidad += cantidad;
-                productoExistente.stock = stock;
+        if (stock <= 0) {
+            if (mensajeStock) {
+                mensajeStock.textContent = "Producto sin stock disponible.";
+                mensajeStock.classList.remove("hidden");
             }
+            return;
+        }
+
+        if (productoExistente) {
+            if (productoExistente.cantidad + cantidad > stock) {
+                if (mensajeStock) {
+                    mensajeStock.textContent =
+                        `Solo hay ${stock} unidades disponibles. Ya tienes ${productoExistente.cantidad} en el carrito.`;
+                    mensajeStock.classList.remove("hidden");
+                }
+                return;
+            }
+
+            productoExistente.cantidad += cantidad;
+            productoExistente.stock = stock;
         } else {
             carrito.push({
                 id: id,
@@ -205,20 +247,18 @@ const producto = await getProductoPorId(productoId);
             JSON.stringify(carrito)
         );
 
-        // Sumamos todas las unidades del carrito.
-        const total = carrito.reduce(
-            (suma, producto) => suma + producto.cantidad,
-            0
-        );
-
-        // Actualizamos el número del Header.
-        const cantidadCarrito =
-            document.querySelector<HTMLElement>("#cantidad-carrito");
-
-        if (cantidadCarrito) {
-            cantidadCarrito.textContent = String(total);
-        }
+        // Avisamos al Header de que el carrito ha cambiado.
+        window.dispatchEvent(new Event("cestaUpdated"));
 
         console.log(carrito);
+
+        // Reiniciar el selector después de añadir al carrito
+        cantidad = 1;
+
+        if (cantidadElemento) {
+            cantidadElemento.textContent = String(cantidad);
+        }
+
+        actualizarMensajeStock();
     });
 </script>

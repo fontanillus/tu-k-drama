@@ -8,13 +8,31 @@
             />
         </a>
     </div>
-    <p
-        class="hidden md:block font-['Cormorant_Garamond'] text-[26px] font-medium text-[#1C1C1C] text-center"
-    >
-        Tu historia favorita, un poco más cerca
-    </p>
+
+    <div class="col-span-2 row-start-2 md:col-span-1 md:row-start-auto flex flex-col items-center gap-2">
+        <p class="hidden md:block font-['Cormorant_Garamond'] text-[26px] font-medium text-[#1C1C1C] text-center">
+            Tu historia favorita, un poco más cerca
+        </p>
+
+        <div
+            id="aviso-login"
+            class="hidden flex-wrap items-center justify-center gap-2 mt-1 font-['Manrope'] text-xs md:text-sm md:whitespace-nowrap text-center"
+        >
+            <span>
+                <strong>¿Ya tienes cuenta?</strong> Accede para comprar más rápido.
+            </span>
+
+            <a
+                href="/usuario"
+                class="shrink-0 text-[#B58A2A] font-semibold underline underline-offset-4 hover:text-[#1C1C1C] transition-colors duration-300"
+            >
+                Iniciar sesión →
+            </a>
+        </div>
+    </div>
+
     <div class="justify-self-end flex items-center gap-6">
-        <a href="#" class="flex items-center gap-2 transition-colors duration-300 hover:text-[#B58A2A]">
+        <a href="/usuario" class="flex items-center gap-2 transition-colors duration-300 hover:text-[#B58A2A]">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -32,25 +50,31 @@
 
             <span class="font-['Manrope'] text-lg font-semibold">Usuario</span>
         </a>
-        <a href="/carrito" class="flex items-center gap-2 transition-colors duration-300 hover:text-[#B58A2A]">
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                class="w-6 h-6"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M2.25 3h1.386c.51 0 .955.343 1.087.835L5.1 5.25m0 0 1.125 4.2M5.1 5.25h15.15l-1.5 6H6.225m0 0 .375 1.4a2.25 2.25 0 0 0 2.174 1.668h7.976m-8.25 3.75h.008v.008H8.5v-.008Zm8.25 0h.008v.008h-.008v-.008Z"
-                ></path>
-            </svg>
 
-            <span class="font-['Manrope'] text-lg font-semibold">
-                Carrito (<span id="cantidad-carrito">0</span>)
-            </span>
+        <a href="/carrito" class="flex items-center gap-2 transition-colors duration-300 hover:text-[#B58A2A]">
+            <div class="relative">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    class="w-6 h-6"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M2.25 3h1.386c.51 0 .955.343 1.087.835L5.1 5.25m0 0 1.125 4.2M5.1 5.25h15.15l-1.5 6H6.225m0 0 .375 1.4a2.25 2.25 0 0 0 2.174 1.668h7.976m-8.25 3.75h.008v.008H8.5v-.008Zm8.25 0h.008v.008h-.008v-.008Z"
+                    ></path>
+                </svg>
+
+                <span
+                    id="cantidad-carrito"
+                    class="absolute -top-3 -right-3 flex min-w-5 h-5 items-center justify-center rounded-full bg-[#B58A2A] px-1 font-['Manrope'] text-xs font-bold text-white"
+                >
+                    0
+                </span>
+            </div>
         </a>
     </div>
 </header>
@@ -62,19 +86,45 @@
         cantidad: number;
     }
 
-    const carrito: ProductoCarrito[] = JSON.parse(
-        localStorage.getItem("carrito") || "[]"
-    );
+    function actualizarCarrito() {
+        const carrito: ProductoCarrito[] = JSON.parse(
+            localStorage.getItem("carrito") || "[]"
+        );
 
-    const total = carrito.reduce(
-        (suma, producto) => suma + producto.cantidad,
-        0
-    );
+        const total = carrito.reduce(
+            (suma, producto) => suma + producto.cantidad,
+            0
+        );
 
-    const cantidadCarrito =
-        document.querySelector<HTMLElement>("#cantidad-carrito");
+        const cantidadCarrito =
+            document.querySelector<HTMLElement>("#cantidad-carrito");
 
-    if (cantidadCarrito) {
-        cantidadCarrito.textContent = String(total);
+        if (cantidadCarrito) {
+            cantidadCarrito.textContent = String(total);
+        }
     }
+
+    // Actualizar al cargar la página
+    actualizarCarrito();
+
+    // Actualizar cuando cambie el carrito
+    window.addEventListener("cestaUpdated", actualizarCarrito);
+    window.addEventListener("pageshow", actualizarCarrito);
+
+    import { supabase } from "../lib/supabase";
+
+    async function actualizarAvisoLogin() {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        const aviso = document.getElementById("aviso-login");
+
+        aviso?.classList.toggle("hidden", !!session);
+        aviso?.classList.toggle("flex", !session);
+    }
+
+    actualizarAvisoLogin();
+
+    supabase.auth.onAuthStateChange(() => {
+        actualizarAvisoLogin();
+    });
 </script>

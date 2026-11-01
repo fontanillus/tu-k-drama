@@ -1,0 +1,289 @@
+---
+import "../styles/global.css";
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+---
+
+<Layout>
+    <Header />
+
+    <main class="min-h-screen bg-[#F7F3ED] px-6 py-12">
+        <div class="max-w-3xl mx-auto">
+            <h1
+                class="font-['Cormorant_Garamond'] text-4xl lg:text-5xl font-semibold mb-4"
+            >
+                Completa tus datos
+            </h1>
+
+            <p class="font-['Manrope'] mb-8">
+                Completa tu perfil para continuar en Tu K-Drama.
+            </p>
+
+            <form
+                action="/api/clientes/crear"
+                method="POST"
+                novalidate
+                class="border border-[#B58A2A] p-8 flex flex-col gap-5"
+            >
+                <div class="flex flex-col gap-2">
+                    <label for="nombres_cliente" class="font-['Manrope'] font-semibold">
+                        Nombre / Persona de contacto
+                    </label>
+                    <input
+                        type="text"
+                        id="nombres_cliente"
+                        name="nombres_cliente"
+                        autocomplete="given-name"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="apellido1_cliente" class="font-['Manrope'] font-semibold">
+                        Primer apellido
+                    </label>
+                    <input
+                        type="text"
+                        id="apellido1_cliente"
+                        name="apellido1_cliente"
+                        autocomplete="family-name"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="apellido2_cliente" class="font-['Manrope'] font-semibold">
+                        Segundo apellido (si lo tienes)
+                    </label>
+                    <input
+                        type="text"
+                        id="apellido2_cliente"
+                        name="apellido2_cliente"
+                        autocomplete="off"
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="telefono_movil" class="font-['Manrope'] font-semibold">
+                        Teléfono móvil
+                    </label>
+                    <input
+                        type="tel"
+                        id="telefono_movil"
+                        name="telefono_movil"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="tipo" class="font-['Manrope'] font-semibold">
+                        Tipo de cliente
+                    </label>
+                    <select
+                        id="tipo"
+                        name="tipo"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    >
+                        <option value="">Selecciona una opción</option>
+                        <option value="particular">Particular</option>
+                        <option value="autonomo">Autónomo</option>
+                        <option value="empresa">Empresa</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="dni_cif" class="font-['Manrope'] font-semibold">
+                        DNI / NIF de empresa
+                    </label>
+                    <input
+                        type="text"
+                        id="dni_cif"
+                        name="dni_cif"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div id="campo_razon_social" class="hidden flex-col gap-2">
+                    <label for="razon_social" class="font-['Manrope'] font-semibold">
+                        Razón social
+                    </label>
+                    <input
+                        type="text"
+                        id="razon_social"
+                        name="razon_social"
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="direccion_facturacion" class="font-['Manrope'] font-semibold">
+                        Dirección de facturación
+                    </label>
+                    <input
+                        type="text"
+                        id="direccion_facturacion"
+                        name="direccion_facturacion"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="codigo_postal" class="font-['Manrope'] font-semibold">
+                        Código postal
+                    </label>
+                    <input
+                        type="text"
+                        id="codigo_postal"
+                        name="codigo_postal"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="ciudad" class="font-['Manrope'] font-semibold">
+                        Ciudad
+                    </label>
+                    <input
+                        type="text"
+                        id="ciudad"
+                        name="ciudad"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="provincia" class="font-['Manrope'] font-semibold">
+                        Provincia
+                    </label>
+                    <input
+                        type="text"
+                        id="provincia"
+                        name="provincia"
+                        required
+                        class="border border-[#B58A2A] px-4 py-3 bg-white"
+                    />
+                </div>
+
+                <button
+                    type="submit"
+                    class="mt-3 bg-[#1A1A1A] text-white font-['Manrope'] font-semibold px-6 py-3 w-fit hover:bg-[#B58A2A] transition-colors"
+                >
+                    Guardar mis datos
+                </button>
+            </form>
+        </div>
+    </main>
+</Layout>
+<script>
+    import { supabase } from "../lib/supabase";
+
+    const params = new URLSearchParams(window.location.hash.substring(1));
+
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+
+    if (accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+        });
+
+        document.cookie = `sb-access-token=${accessToken}; path=/; SameSite=Lax`;
+        document.cookie = `sb-refresh-token=${refreshToken}; path=/; SameSite=Lax`;
+
+        console.log("Sesión establecida:", !!data.session);
+        console.log("Error de sesión:", error);
+    }
+</script>
+<script>
+    const tipoCliente = document.querySelector<HTMLSelectElement>("#tipo");
+    const campoRazonSocial = document.querySelector<HTMLElement>("#campo_razon_social");
+    const razonSocial = document.querySelector<HTMLInputElement>("#razon_social");
+
+    tipoCliente?.addEventListener("change", () => {
+        const esEmpresa = tipoCliente.value === "empresa";
+
+        campoRazonSocial?.classList.toggle("hidden", !esEmpresa);
+        campoRazonSocial?.classList.toggle("flex", esEmpresa);
+
+        if (razonSocial) {
+            razonSocial.required = esEmpresa;
+            if (!esEmpresa) razonSocial.value = "";
+        }
+    });
+</script>
+<script>
+    const formulario = document.querySelector<HTMLFormElement>("form");
+
+    if (formulario) {
+        const campos = formulario.querySelectorAll<
+            HTMLInputElement | HTMLSelectElement
+        >("input, select");
+
+        // Comprobar un campo y mostrar u ocultar su error
+        function validarCampo(campo: HTMLInputElement | HTMLSelectElement) {
+            const esValido = campo.value.trim() !== "";
+
+            let mensaje = document.getElementById(`error_${campo.id}`);
+
+            // Crear el mensaje solo si todavía no existe
+            if (!mensaje) {
+                mensaje = document.createElement("p");
+                mensaje.id = `error_${campo.id}`;
+                mensaje.className =
+                    "hidden text-red-600 text-sm font-['Manrope']";
+                mensaje.setAttribute("role", "alert");
+                mensaje.textContent = `Por favor, completa el campo ${campo.labels?.[0]?.textContent?.trim() || "obligatorio"}.`;
+
+                campo.insertAdjacentElement("afterend", mensaje);
+            }
+
+            mensaje.classList.toggle("hidden", esValido);
+
+            campo.classList.toggle("!border-red-600", !esValido);
+            campo.setAttribute("aria-invalid", String(!esValido));
+
+            return esValido;
+        }
+
+        // Validar cuando el usuario corrige un campo
+        campos.forEach((campo) => {
+            const evento = campo.tagName === "SELECT" ? "change" : "input";
+
+            campo.addEventListener(evento, () => {
+                if (campo.getAttribute("aria-invalid") === "true") {
+                    validarCampo(campo);
+                }
+            });
+        });
+
+        // Comprobar todos los campos antes de enviar
+        formulario.addEventListener("submit", (evento) => {
+            let primerCampoIncorrecto:
+                HTMLInputElement | HTMLSelectElement | null = null;
+
+            for (const campo of campos) {
+                // Razón social solo es obligatoria para empresas
+                if (!campo.required) continue;
+
+                if (!validarCampo(campo) && !primerCampoIncorrecto) {
+                    primerCampoIncorrecto = campo;
+                }
+            }
+
+            if (primerCampoIncorrecto) {
+                evento.preventDefault();
+                primerCampoIncorrecto.focus();
+            }
+        });
+    }
+</script>
