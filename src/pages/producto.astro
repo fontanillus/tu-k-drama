@@ -73,6 +73,10 @@ const producto = await getProductoPorId(productoId);
 
                             <p class="font-['Manrope']">
                                 Stock disponible: {producto.stock}
+                                <span
+                                    id="indicador-disponibilidad"
+                                    class="hidden ml-2 text-sm font-semibold text-[#B58A2A]"
+                                ></span>
                             </p>
 
                             <div class="flex items-center gap-3">
@@ -129,6 +133,30 @@ const producto = await getProductoPorId(productoId);
             }
         </div>
     </main>
+    <script define:vars={{ stockProducto: producto?.stock ?? null }} is:inline>
+        (() => {
+            const indicador = document.getElementById(
+                "indicador-disponibilidad"
+            );
+
+            if (!indicador) {
+                return;
+            }
+
+            if (
+                typeof stockProducto !== "number" ||
+                !Number.isFinite(stockProducto) ||
+                stockProducto < 0
+            ) {
+                console.error("Stock inválido para el indicador de disponibilidad.");
+                return;
+            }
+
+            indicador.textContent =
+                stockProducto > 0 ? "En stock" : "Agotado";
+            indicador.classList.remove("hidden");
+        })();
+    </script>
 </Layout>
 <script>
     import { agregarAlCarrito, leerCarrito } from "../lib/carrito";
