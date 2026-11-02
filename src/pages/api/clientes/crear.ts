@@ -113,10 +113,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         return new Response("Error al guardar el cliente", { status: 500 });
     }
 
+    // Redirección según el origen de navegación, validada con lista blanca
+    // para evitar redirecciones abiertas.
+    const volver = formData.get("volver");
+
     return new Response(null, {
         status: 302,
         headers: {
-            Location: "/",
+            Location: volver === "carrito" ? "/carrito" : "/",
         },
     });
 };

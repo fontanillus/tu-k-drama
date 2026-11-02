@@ -44,10 +44,14 @@ import Header from "../components/Header.astro";
     const botonGoogle = document.getElementById("login-google");
 
     botonGoogle?.addEventListener("click", async () => {
+        // Conservar el origen de navegación (lista blanca) a través del OAuth.
+        const volver = new URLSearchParams(window.location.search).get("volver");
+        const destino = volver === "carrito" ? "/perfil?volver=carrito" : "/perfil";
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo: `${window.location.origin}/perfil`,
+                redirectTo: `${window.location.origin}${destino}`,
             },
         });
 

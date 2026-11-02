@@ -2,6 +2,41 @@
 import "../styles/global.css";
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
+import pool from "../lib/db";
+import { getUsuarioDesdeCookies } from "../lib/auth";
+
+// Si ya hay sesión (cookies), recuperamos los datos del cliente
+// para precargar el formulario y permitir actualizarlos.
+const { user } = await getUsuarioDesdeCookies(Astro.cookies);
+
+let cliente = null;
+
+if (user) {
+    const resultado = await pool.query(
+        `SELECT
+            nombres_cliente,
+            apellido1_cliente,
+            apellido2_cliente,
+            telefono_movil,
+            dni_cif,
+            tipo,
+            razon_social,
+            direccion_facturacion,
+            codigo_postal,
+            ciudad,
+            provincia
+         FROM clientes
+         WHERE pk_cliente = $1`,
+        [user.id]
+    );
+
+    cliente = resultado.rows[0] ?? null;
+}
+
+const esEmpresa = cliente?.tipo === "empresa";
+
+// Origen de navegación (lista blanca): solo se admite "carrito".
+const volver = Astro.url.searchParams.get("volver") === "carrito" ? "carrito" : null;
 ---
 
 <Layout>
@@ -25,6 +60,7 @@ import Header from "../components/Header.astro";
                 novalidate
                 class="border border-[#B58A2A] p-8 flex flex-col gap-5"
             >
+                {volver && <input type="hidden" name="volver" value={volver} />}
                 <div class="flex flex-col gap-2">
                     <label for="nombres_cliente" class="font-['Manrope'] font-semibold">
                         Nombre / Persona de contacto
@@ -35,6 +71,7 @@ import Header from "../components/Header.astro";
                         name="nombres_cliente"
                         autocomplete="given-name"
                         required
+                        value={cliente?.nombres_cliente}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -49,6 +86,7 @@ import Header from "../components/Header.astro";
                         name="apellido1_cliente"
                         autocomplete="family-name"
                         required
+                        value={cliente?.apellido1_cliente}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -62,6 +100,7 @@ import Header from "../components/Header.astro";
                         id="apellido2_cliente"
                         name="apellido2_cliente"
                         autocomplete="off"
+                        value={cliente?.apellido2_cliente}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -75,6 +114,7 @@ import Header from "../components/Header.astro";
                         id="telefono_movil"
                         name="telefono_movil"
                         required
+                        value={cliente?.telefono_movil}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -90,9 +130,9 @@ import Header from "../components/Header.astro";
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     >
                         <option value="">Selecciona una opción</option>
-                        <option value="particular">Particular</option>
-                        <option value="autonomo">Autónomo</option>
-                        <option value="empresa">Empresa</option>
+                        <option value="particular" selected={cliente?.tipo === "particular"}>Particular</option>
+                        <option value="autonomo" selected={cliente?.tipo === "autonomo"}>Autónomo</option>
+                        <option value="empresa" selected={esEmpresa}>Empresa</option>
                     </select>
                 </div>
 
@@ -105,11 +145,15 @@ import Header from "../components/Header.astro";
                         id="dni_cif"
                         name="dni_cif"
                         required
+                        value={cliente?.dni_cif}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
 
-                <div id="campo_razon_social" class="hidden flex-col gap-2">
+                <div
+                    id="campo_razon_social"
+                    class={`${esEmpresa ? "flex" : "hidden"} flex-col gap-2`}
+                >
                     <label for="razon_social" class="font-['Manrope'] font-semibold">
                         Razón social
                     </label>
@@ -117,6 +161,8 @@ import Header from "../components/Header.astro";
                         type="text"
                         id="razon_social"
                         name="razon_social"
+                        required={esEmpresa}
+                        value={cliente?.razon_social}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -130,6 +176,7 @@ import Header from "../components/Header.astro";
                         id="direccion_facturacion"
                         name="direccion_facturacion"
                         required
+                        value={cliente?.direccion_facturacion}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -143,6 +190,7 @@ import Header from "../components/Header.astro";
                         id="codigo_postal"
                         name="codigo_postal"
                         required
+                        value={cliente?.codigo_postal}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -156,6 +204,7 @@ import Header from "../components/Header.astro";
                         id="ciudad"
                         name="ciudad"
                         required
+                        value={cliente?.ciudad}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -169,6 +218,7 @@ import Header from "../components/Header.astro";
                         id="provincia"
                         name="provincia"
                         required
+                        value={cliente?.provincia}
                         class="border border-[#B58A2A] px-4 py-3 bg-white"
                     />
                 </div>
@@ -202,6 +252,14 @@ import Header from "../components/Header.astro";
 
         console.log("Sesión establecida:", !!data.session);
         console.log("Error de sesión:", error);
+
+        // Con sesión y cookies establecidas, recargamos una única vez para que
+        // el servidor precargue los datos del cliente en el formulario.
+        // Se conserva la query (?volver=...) y se descarta el hash con los
+        // tokens, así que no hay bucle.
+        if (!error && data.session) {
+            window.location.replace("/perfil" + window.location.search);
+        }
     }
 </script>
 <script>
