@@ -3,27 +3,17 @@ import "../styles/global.css";
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
 import pool from "../lib/db";
-import { supabase } from "../lib/supabase";
+import { getUsuarioDesdeCookies } from "../lib/auth";
 
 const facturaId = Number(Astro.url.searchParams.get("id"));
-
-const accessToken = Astro.cookies.get("sb-access-token")?.value;
-const refreshToken = Astro.cookies.get("sb-refresh-token")?.value;
 
 let factura = null;
 let productos = [];
 let errorMessage = "";
 
-if (!accessToken || !refreshToken) {
-    return Astro.redirect("/usuario");
-}
+const { user } = await getUsuarioDesdeCookies(Astro.cookies);
 
-const { data, error } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-});
-
-if (error || !data.user) {
+if (!user) {
     return Astro.redirect("/usuario");
 }
 
@@ -41,7 +31,7 @@ if (!Number.isSafeInteger(facturaId) || facturaId <= 0) {
              ON c.pk_cliente = f.fk_cliente
          WHERE f.pk_factura = $1
            AND f.fk_cliente = $2`,
-        [facturaId, data.user.id]
+        [facturaId, user.id]
     );
 
     factura = resultado.rows[0] ?? null;
@@ -111,7 +101,7 @@ if (!Number.isSafeInteger(facturaId) || facturaId <= 0) {
                         </div>
 
                         <div class="w-full overflow-x-auto print:overflow-visible">
-                            <table class="w-full min-w-[520px] mt-8 border-collapse text-sm sm:text-base print:min-w-0">
+                            <table class="w-full min-w-130 mt-8 border-collapse text-sm sm:text-base print:min-w-0">
                             <thead>
                                 <tr class="border-b">
                                     <th class="text-left py-3">Producto</th>

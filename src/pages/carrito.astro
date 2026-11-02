@@ -80,17 +80,17 @@ import Header from "../components/Header.astro";
     </main>
 </Layout>
 <script>
-    interface ProductoCarrito {
-        id: string;
-        nombre: string;
-        precio: number;
-        cantidad: number;
-        stock: number;
-    }
+    import { guardarCarrito, leerCarrito } from "../lib/carrito";
 
-    let carrito: ProductoCarrito[] = JSON.parse(
-        localStorage.getItem("carrito") || "[]"
-    );
+    let carrito = leerCarrito();
+
+    // Guarda el carrito, avisa al Header y vuelve a pintar lista, total y botones.
+    function persistirYRefrescar() {
+        guardarCarrito(carrito);
+        mostrarCarrito();
+        actualizarTotal();
+        activarBotones();
+    }
 
     function actualizarEstadoCarrito() {
         const boton = document.getElementById("finalizar-compra");
@@ -203,16 +203,7 @@ import Header from "../components/Header.astro";
                 (producto) => producto.id !== id
             );
 
-            localStorage.setItem(
-                "carrito",
-                JSON.stringify(carrito)
-            );
-
-            window.dispatchEvent(new Event("cestaUpdated"));
-
-            mostrarCarrito();
-            actualizarTotal();
-            activarBotones();
+            persistirYRefrescar();
         });
     });
 
@@ -231,16 +222,7 @@ import Header from "../components/Header.astro";
             if (producto && producto.cantidad < producto.stock) {
                 producto.cantidad++;
 
-                localStorage.setItem(
-                    "carrito",
-                    JSON.stringify(carrito)
-                );
-
-                window.dispatchEvent(new Event("cestaUpdated"));
-
-                mostrarCarrito();
-                actualizarTotal();
-                activarBotones();
+                persistirYRefrescar();
             }
         });
     });
@@ -260,16 +242,7 @@ import Header from "../components/Header.astro";
             if (producto && producto.cantidad > 1) {
                 producto.cantidad--;
 
-                localStorage.setItem(
-                    "carrito",
-                    JSON.stringify(carrito)
-                );
-
-                window.dispatchEvent(new Event("cestaUpdated"));
-
-                mostrarCarrito();
-                actualizarTotal();
-                activarBotones();
+                persistirYRefrescar();
             }
         });
     });

@@ -82,19 +82,10 @@
 <div class="h-0.75 bg-[#B08D57]"></div>
 
 <script>
-    interface ProductoCarrito {
-        cantidad: number;
-    }
+    import { contarUnidades } from "../lib/carrito";
 
     function actualizarCarrito() {
-        const carrito: ProductoCarrito[] = JSON.parse(
-            localStorage.getItem("carrito") || "[]"
-        );
-
-        const total = carrito.reduce(
-            (suma, producto) => suma + producto.cantidad,
-            0
-        );
+        const total = contarUnidades();
 
         const cantidadCarrito =
             document.querySelector<HTMLElement>("#cantidad-carrito");

@@ -1,35 +1,27 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { getProductoPorId } from "../../../lib/productos";
-import { supabase } from "../../../lib/supabase";
+import { getUsuarioDesdeCookies } from "../../../lib/auth";
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
 
 export const POST: APIRoute = async ({ request, cookies }) => {
     try {
-        const accessToken = cookies.get("sb-access-token")?.value;
-        const refreshToken = cookies.get("sb-refresh-token")?.value;
+        const sesion = await getUsuarioDesdeCookies(cookies);
 
-        if (!accessToken || !refreshToken) {
+        if (!sesion.user) {
             return new Response(
-                JSON.stringify({ error: "Debes iniciar sesión para comprar" }),
+                JSON.stringify({
+                    error:
+                        sesion.error === "sin-sesion"
+                            ? "Debes iniciar sesión para comprar"
+                            : "Sesión no válida",
+                }),
                 { status: 401 }
             );
         }
 
-        const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-        });
-
-        if (error || !data.user) {
-            return new Response(
-                JSON.stringify({ error: "Sesión no válida" }),
-                { status: 401 }
-            );
-        }
-
-        const userId = data.user.id;
+        const userId = sesion.user.id;
 
         const { productos } = await request.json();
 

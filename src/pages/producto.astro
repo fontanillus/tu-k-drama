@@ -130,37 +130,25 @@ const producto = await getProductoPorId(productoId);
         </div>
     </main>
 </Layout>
-<script define:vars={{ stockProducto: producto?.stock ?? 0 }} is:inline>
-    /**
-     * @typedef {Object} ProductoCarrito
-     * @property {string} id
-     * @property {string} nombre
-     * @property {number} precio
-     * @property {number} cantidad
-     * @property {number} stock
-     */
+<script>
+    import { agregarAlCarrito, leerCarrito } from "../lib/carrito";
 
-    /** @type {HTMLButtonElement | null} */
-    const boton = document.querySelector("#btn-carrito");
+    const boton = document.querySelector<HTMLButtonElement>("#btn-carrito");
 
-    /** @type {HTMLButtonElement | null} */
     const botonRestar =
-        document.querySelector("#restar-cantidad");
+        document.querySelector<HTMLButtonElement>("#restar-cantidad");
 
-    /** @type {HTMLButtonElement | null} */
     const botonSumar =
-        document.querySelector("#sumar-cantidad");
+        document.querySelector<HTMLButtonElement>("#sumar-cantidad");
 
-    /** @type {HTMLElement | null} */
     const cantidadElemento =
-        document.querySelector("#cantidad");
+        document.querySelector<HTMLElement>("#cantidad");
 
     let cantidad = 1;
-    const stock = stockProducto;
+    const stock = Number(boton?.dataset.stock ?? 0);
 
-    /** @type {HTMLElement | null} */
     const mensajeStock =
-        document.querySelector("#mensaje-stock");
+        document.querySelector<HTMLElement>("#mensaje-stock");
 
     function actualizarMensajeStock() {
         if (mensajeStock) {
@@ -199,58 +187,23 @@ const producto = await getProductoPorId(productoId);
             return;
         }
 
-        // Recuperamos el carrito guardado.
-        // Si todavía no existe, empezamos con un array vacío.
-        /** @type {ProductoCarrito[]} */
-        const carrito = JSON.parse(
-            localStorage.getItem("carrito") || "[]"
+        const resultado = agregarAlCarrito(
+            { id, nombre, precio: Number(precio), stock },
+            cantidad
         );
 
-        // Buscamos si este producto ya está en el carrito.
-        const productoExistente = carrito.find(
-            (producto) => producto.id === id
-        );
-
-        if (stock <= 0) {
+        if (!resultado.ok) {
             if (mensajeStock) {
-                mensajeStock.textContent = "Producto sin stock disponible.";
+                mensajeStock.textContent =
+                    resultado.motivo === "sin-stock"
+                        ? "Producto sin stock disponible."
+                        : `Solo hay ${stock} unidades disponibles. Ya tienes ${resultado.enCarrito} en el carrito.`;
                 mensajeStock.classList.remove("hidden");
             }
             return;
         }
 
-        if (productoExistente) {
-            if (productoExistente.cantidad + cantidad > stock) {
-                if (mensajeStock) {
-                    mensajeStock.textContent =
-                        `Solo hay ${stock} unidades disponibles. Ya tienes ${productoExistente.cantidad} en el carrito.`;
-                    mensajeStock.classList.remove("hidden");
-                }
-                return;
-            }
-
-            productoExistente.cantidad += cantidad;
-            productoExistente.stock = stock;
-        } else {
-            carrito.push({
-                id: id,
-                nombre: nombre,
-                precio: Number(precio),
-                cantidad: cantidad,
-                stock: stock
-            });
-        }
-
-        // Guardamos de nuevo todo el carrito.
-        localStorage.setItem(
-            "carrito",
-            JSON.stringify(carrito)
-        );
-
-        // Avisamos al Header de que el carrito ha cambiado.
-        window.dispatchEvent(new Event("cestaUpdated"));
-
-        console.log(carrito);
+        console.log(leerCarrito());
 
         // Reiniciar el selector después de añadir al carrito
         cantidad = 1;

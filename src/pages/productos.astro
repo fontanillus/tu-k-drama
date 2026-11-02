@@ -140,13 +140,7 @@ const categoriaActual = categorias.find(
 </Layout>
 
 <script>
-    interface ProductoCarrito {
-        id: string;
-        nombre: string;
-        precio: number;
-        cantidad: number;
-        stock: number;
-    }
+    import { agregarAlCarrito } from "../lib/carrito";
 
     document.querySelectorAll<HTMLButtonElement>(".btn-agregar")
         .forEach((boton) => {
@@ -155,39 +149,17 @@ const categoriaActual = categorias.find(
 
                 if (!id || !nombre || !precio || !stock) return;
 
-                const stockDisponible = Number(stock);
+                const resultado = agregarAlCarrito({
+                    id,
+                    nombre,
+                    precio: Number(precio),
+                    stock: Number(stock),
+                });
 
-                if (stockDisponible <= 0) return;
-
-                const carrito: ProductoCarrito[] = JSON.parse(
-                    localStorage.getItem("carrito") || "[]"
-                );
-
-                const existente = carrito.find(
-                    (producto) => producto.id === id
-                );
-
-                if (existente) {
-                    if (existente.cantidad >= stockDisponible) {
-                        const dialogStock = document.querySelector<HTMLDialogElement>("#dialog-stock");
-                        dialogStock?.showModal();
-                        return;
-                    }
-
-                    existente.cantidad++;
-                    existente.stock = stockDisponible;
-                } else {
-                    carrito.push({
-                        id,
-                        nombre,
-                        precio: Number(precio),
-                        cantidad: 1,
-                        stock: stockDisponible
-                    });
+                if (!resultado.ok && resultado.motivo === "stock-maximo") {
+                    const dialogStock = document.querySelector<HTMLDialogElement>("#dialog-stock");
+                    dialogStock?.showModal();
                 }
-
-                localStorage.setItem("carrito", JSON.stringify(carrito));
-                window.dispatchEvent(new Event("cestaUpdated"));
             });
         });
 </script>

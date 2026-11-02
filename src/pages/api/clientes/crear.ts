@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import pool from "../../../lib/db";
-import { supabase } from "../../../lib/supabase";
+import { getUsuarioDesdeCookies } from "../../../lib/auth";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
     const formData = await request.formData();
@@ -47,20 +47,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         });
     }
 
-    const accessToken = cookies.get("sb-access-token")?.value;
-    const refreshToken = cookies.get("sb-refresh-token")?.value;
+    const sesion = await getUsuarioDesdeCookies(cookies);
 
-    if (!accessToken || !refreshToken) {
-        return new Response("No autenticado", { status: 401 });
-    }
-
-    const { data, error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-    });
-
-    if (error || !data.user) {
-        return new Response("Sesión no válida", { status: 401 });
+    if (!sesion.user) {
+        return new Response(
+            sesion.error === "sin-sesion" ? "No autenticado" : "Sesión no válida",
+            { status: 401 }
+        );
     }
 
     const textQuery = `
@@ -97,8 +90,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 `;
 
     const values = [
-        data.user.id,
-        data.user.email,
+        sesion.user.id,
+        sesion.user.email,
         dni_cif,
         tipo,
         tipo === "empresa" ? razon_social.trim() : null,
